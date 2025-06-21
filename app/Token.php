@@ -8,13 +8,14 @@ class Token
 {
     public function __construct(
         private TokenType $type,
-        private String $lexeme,
+        private string $lexeme,
+        private ?string $literal,
         private int $line,
     ) {}
 
     public function __toString()
     {
-        return $this->type->name." ".$this->lexeme." null";
+        return $this->type->name." ".$this->lexeme." ".(is_null($this->literal) ? "null" : $this->literal);
     }
 
     public function getType(): TokenType

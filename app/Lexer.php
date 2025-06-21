@@ -47,13 +47,34 @@ class Lexer
                 case '>':
                     $this->addToken($this->match('=') ? TokenType::GREATER_EQUAL : TokenType::GREATER);
                     break;
+                case '/':
+                    if ($this->match('/')) {
+                        // A comment goes until the end of the line.
+                        while ($this->peek() !== PHP_EOL && !$this->isAtEnd()) $this->advance();
+                    } else {
+                        $this->addToken(TokenType::SLASH);
+                    }
+                    break;
+                case ' ':
+                case '\r':
+                case '\t':
+                    // Ignore whitespace.
+                    break;
+                case PHP_EOL:
+                    $this->line++;
+                    break;
+                case '"': $this->string(); break;
                 default:
+                 if ($this->isDigit($c)) {
+                    $this->number();
+                } else {
                     Lox::error($this->line, "Unexpected character: $c");
+                }
                     break;
             }
         }
 
-        $this->tokens[] = new Token(TokenType::EOF, "", $this->line);
+        $this->tokens[] = new Token(TokenType::EOF, "", null, $this->line);
         return $this->tokens;
     }
 
@@ -76,9 +97,61 @@ class Lexer
         return $this->source[$this->current++];
     }
 
-    private function addToken(TokenType $type): void
+    private function addToken(TokenType $type, ?string $literal = null): void
     {
         $text = substr($this->source, $this->start, $this->current - $this->start);
-        $this->tokens[] = new Token($type, $text, $this->line);
+        $this->tokens[] = new Token($type, $text, $literal, $this->line);
+    }
+
+    private function peek(): string
+    {
+        if ($this->isAtEnd()) return '\0';
+        return $this->source[$this->current];
+    }
+
+    private function string(): void
+    {
+        while ($this->peek() != '"' && !$this->isAtEnd()) {
+            if ($this->peek() === PHP_EOL) $this->line++;
+            $this->advance();
+        }
+
+        if ($this->isAtEnd()) {
+            Lox::error($this->line, "Unterminated string.");
+            return;
+        }
+
+        // The closing ".
+        $this->advance();
+
+        // Trim the surrounding quotes.
+        $value = substr($this->source, $this->start + 1, $this->current - 1);
+        $this->addToken(TokenType::STRING, $value);
+    }
+
+    private function isDigit(string $c): bool {
+        return $c >= '0' && $c <= '9';
+    }
+
+    private function number(): void {
+        while ($this->isDigit($this->peek())) $this->advance();
+
+        // Look for a fractional part.
+        if ($this->peek() == '.' && $this->isDigit($this->peekNext())) {
+            // Consume the "."
+            $this->advance();
+
+            while ($this->isDigit($this->peek()))
+            {
+                $this->advance();
+            }
+        }
+
+        $this->addToken(TokenType::NUMBER, (float) substr($this->source, $this->start, $this->current - $this->start));
+    }
+
+    private function peekNext(): string {
+        if ($this->current + 1 >= strlen($this->source)) return '\0';
+        return $this->source[$this->current + 1];
     }
 }

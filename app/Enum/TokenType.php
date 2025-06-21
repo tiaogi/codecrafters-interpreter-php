@@ -28,27 +28,27 @@ enum TokenType: string
     case LESS_EQUAL = "<=";
 
     // Literals.
-    case L_IDENTIFIER = "ID";
-    case L_STRING = "S";
-    case L_NUMBER = "N";
+    case IDENTIFIER = "ID";
+    case STRING = "S";
+    case NUMBER = "N";
 
       // Keywords.
-    case K_AND = "and";
-    case K_CLASS = "class";
-    case K_ELSE = "else";
-    case K_FALSE = "false";
-    case K_FUN = "fun";
-    case K_FOR = "for";
-    case K_IF = "if";
-    case K_NIL = "nil";
-    case K_OR = "or";
-    case K_PRINT = "print";
-    case K_RETURN = "return";
-    case K_SUPER = "super";
-    case K_THIS = "this";
-    case K_TRUE = "true";
-    case K_VAR = "var";
-    case K_WHILE = "while";
+    case AND = "and";
+    case K_CLASS = "class"; // Reserved keyword for PHP
+    case ELSE = "else";
+    case FALSE = "false";
+    case FUN = "fun";
+    case FOR = "for";
+    case IF = "if";
+    case NIL = "nil";
+    case OR = "or";
+    case PRINT = "print";
+    case RETURN = "return";
+    case SUPER = "super";
+    case THIS = "this";
+    case TRUE = "true";
+    case VAR = "var";
+    case WHILE = "while";
 
     // EOF
     case EOF = PHP_EOL;
