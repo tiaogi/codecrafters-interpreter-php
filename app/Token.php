@@ -15,7 +15,7 @@ class Token
 
     public function __toString()
     {
-        return $this->type->name." ".$this->lexeme." ".$this->getLiteralForDisplay();
+        return $this->getNameForDisplay()." ".$this->lexeme." ".$this->getLiteralForDisplay();
     }
 
     public function getType(): TokenType
@@ -29,5 +29,12 @@ class Token
         if (is_float($this->literal)) return fmod($this->literal, 1) === 0.0 ? sprintf('%.1f', $this->literal) : (string) $this->literal;
 
         return $this->literal;
+    }
+
+    private function getNameForDisplay(): string
+    {
+        // class is a reserved keyword in PHP, the enum cannot be named like that
+        if ($this->type === TokenType::K_CLASS) return "CLASS";
+        else return $this->type->name;
     }
 }
