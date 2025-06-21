@@ -20,8 +20,8 @@ $file_contents = file_get_contents($filename);
 fwrite(STDERR, "Logs from your program will appear here!\n");
 
 // Uncomment this block to pass the first stage
-// if ($file_contents) {
-//     throw new Exception("Scanner not implemented");
-// } else {
-//     echo "EOF  null\n"; // Placeholder, replace this line when implementing the scanner
-// }
+if ($file_contents) {
+    throw new Exception("Scanner not implemented");
+} else {
+    echo "EOF  null\n"; // Placeholder, replace this line when implementing the scanner
+}
