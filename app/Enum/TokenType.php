@@ -18,14 +18,14 @@ enum TokenType: string
     case STAR = "*";
 
     // Operations.
-    case OP_BANG = "!";
-    case OP_BANG_EQUAL = "!=";
-    case OP_EQUAL = "=";
-    case OP_EQUAL_EQUAL = "==";
-    case OP_GREATER = ">";
-    case OP_GREATER_EQUAL = ">=";
-    case OP_LESS = "<";
-    case OP_LESS_EQUAL = "<=";
+    case BANG = "!";
+    case BANG_EQUAL = "!=";
+    case EQUAL = "=";
+    case EQUAL_EQUAL = "==";
+    case GREATER = ">";
+    case GREATER_EQUAL = ">=";
+    case LESS = "<";
+    case LESS_EQUAL = "<=";
 
     // Literals.
     case L_IDENTIFIER = "ID";

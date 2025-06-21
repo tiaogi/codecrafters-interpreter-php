@@ -36,16 +36,16 @@ class Lexer
                 case ';': $this->addToken(TokenType::SEMICOLON); break;
                 case '*': $this->addToken(TokenType::STAR); break;
                 case '!':
-                    $this->addToken($this->match('=') ? TokenType::OP_BANG_EQUAL : TokenType::OP_BANG);
+                    $this->addToken($this->match('=') ? TokenType::BANG_EQUAL : TokenType::BANG);
                     break;
                 case '=':
-                    $this->addToken($this->match('=') ? TokenType::OP_EQUAL_EQUAL : TokenType::OP_EQUAL);
+                    $this->addToken($this->match('=') ? TokenType::EQUAL_EQUAL : TokenType::EQUAL);
                     break;
                 case '<':
-                    $this->addToken($this->match('=') ? TokenType::OP_LESS_EQUAL : TokenType::OP_LESS);
+                    $this->addToken($this->match('=') ? TokenType::LESS_EQUAL : TokenType::LESS);
                     break;
                 case '>':
-                    $this->addToken($this->match('=') ? TokenType::OP_GREATER_EQUAL : TokenType::OP_GREATER);
+                    $this->addToken($this->match('=') ? TokenType::GREATER_EQUAL : TokenType::GREATER);
                     break;
                 default:
                     Lox::error($this->line, "Unexpected character: $c");
