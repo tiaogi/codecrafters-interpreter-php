@@ -29,7 +29,7 @@ class Lox
 
     static function report(int $line, string $where, string $message): void
     {
-        fwrite(STDOUT, "[line $line] Error $where : $message");
+        fwrite(STDERR, "[line $line] Error".$where.": $message".PHP_EOL);
         self::$hadError = true;
     }
 

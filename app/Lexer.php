@@ -48,7 +48,7 @@ class Lexer
                     $this->addToken($this->match('=') ? TokenType::OP_GREATER_EQUAL : TokenType::OP_GREATER);
                     break;
                 default:
-                    Lox::error($this->line, "Unexpected character.");
+                    Lox::error($this->line, "Unexpected character: $c");
                     break;
             }
         }
