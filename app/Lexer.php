@@ -25,39 +25,39 @@ class Lexer
             $c = $this->advance();
 
             switch ($c) {
-                case '(': $this->addToken(TokenType::LEFT_PAREN); break;
-                case ')': $this->addToken(TokenType::RIGHT_PAREN); break;
-                case '{': $this->addToken(TokenType::LEFT_BRACE); break;
-                case '}': $this->addToken(TokenType::RIGHT_BRACE); break;
-                case ',': $this->addToken(TokenType::COMMA); break;
-                case '.': $this->addToken(TokenType::DOT); break;
-                case '-': $this->addToken(TokenType::MINUS); break;
-                case '+': $this->addToken(TokenType::PLUS); break;
-                case ';': $this->addToken(TokenType::SEMICOLON); break;
-                case '*': $this->addToken(TokenType::STAR); break;
-                case '!':
-                    $this->addToken($this->match('=') ? TokenType::BANG_EQUAL : TokenType::BANG);
+                case "(": $this->addToken(TokenType::LEFT_PAREN); break;
+                case ")": $this->addToken(TokenType::RIGHT_PAREN); break;
+                case "{": $this->addToken(TokenType::LEFT_BRACE); break;
+                case "}": $this->addToken(TokenType::RIGHT_BRACE); break;
+                case ",": $this->addToken(TokenType::COMMA); break;
+                case ".": $this->addToken(TokenType::DOT); break;
+                case "-": $this->addToken(TokenType::MINUS); break;
+                case "+": $this->addToken(TokenType::PLUS); break;
+                case ";": $this->addToken(TokenType::SEMICOLON); break;
+                case "*": $this->addToken(TokenType::STAR); break;
+                case "!":
+                    $this->addToken($this->match("=") ? TokenType::BANG_EQUAL : TokenType::BANG);
                     break;
-                case '=':
-                    $this->addToken($this->match('=') ? TokenType::EQUAL_EQUAL : TokenType::EQUAL);
+                case "=":
+                    $this->addToken($this->match("=") ? TokenType::EQUAL_EQUAL : TokenType::EQUAL);
                     break;
-                case '<':
-                    $this->addToken($this->match('=') ? TokenType::LESS_EQUAL : TokenType::LESS);
+                case "<":
+                    $this->addToken($this->match("=") ? TokenType::LESS_EQUAL : TokenType::LESS);
                     break;
-                case '>':
-                    $this->addToken($this->match('=') ? TokenType::GREATER_EQUAL : TokenType::GREATER);
+                case ">":
+                    $this->addToken($this->match("=") ? TokenType::GREATER_EQUAL : TokenType::GREATER);
                     break;
-                case '/':
-                    if ($this->match('/')) {
+                case "/":
+                    if ($this->match("/")) {
                         // A comment goes until the end of the line.
                         while ($this->peek() !== PHP_EOL && !$this->isAtEnd()) $this->advance();
                     } else {
                         $this->addToken(TokenType::SLASH);
                     }
                     break;
-                case ' ':
-                case '\r':
-                case '\t':
+                case " ":
+                case "\r":
+                case "\t":
                     // Ignore whitespace.
                     break;
                 case PHP_EOL:
