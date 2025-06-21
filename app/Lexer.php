@@ -97,7 +97,7 @@ class Lexer
         return $this->source[$this->current++];
     }
 
-    private function addToken(TokenType $type, ?string $literal = null): void
+    private function addToken(TokenType $type, string|float|null $literal = null): void
     {
         $text = substr($this->source, $this->start, $this->current - $this->start);
         $this->tokens[] = new Token($type, $text, $literal, $this->line);
@@ -148,7 +148,7 @@ class Lexer
             }
         }
 
-        $this->addToken(TokenType::NUMBER, (float) substr($this->source, $this->start, $this->current - $this->start - 1));
+        $this->addToken(TokenType::NUMBER, (float) substr($this->source, $this->start, $this->current - $this->start));
     }
 
     private function peekNext(): string {
