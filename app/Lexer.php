@@ -67,7 +67,10 @@ class Lexer
                 default:
                  if ($this->isDigit($c)) {
                     $this->number();
-                } else {
+                } else if ($this->isAlpha($c)) {
+                   $this->identifier();
+                }
+                else {
                     Lox::error($this->line, "Unexpected character: $c");
                 }
                     break;
@@ -130,11 +133,13 @@ class Lexer
         $this->addToken(TokenType::STRING, $value);
     }
 
-    private function isDigit(string $c): bool {
+    private function isDigit(string $c): bool
+    {
         return $c >= '0' && $c <= '9';
     }
 
-    private function number(): void {
+    private function number(): void
+    {
         while ($this->isDigit($this->peek())) $this->advance();
 
         // Look for a fractional part.
@@ -151,8 +156,32 @@ class Lexer
         $this->addToken(TokenType::NUMBER, (float) substr($this->source, $this->start, $this->current - $this->start));
     }
 
-    private function peekNext(): string {
+    private function peekNext(): string
+    {
         if ($this->current + 1 >= strlen($this->source)) return '\0';
         return $this->source[$this->current + 1];
+    }
+
+    private function identifier(): void
+    {
+        while ($this->isAlphaNumeric($this->peek())) $this->advance();
+
+        $text = substr($this->source, $this->start, $this->current - $this->start);
+        $type = TokenType::getKeyword($text);
+
+        if (is_null($type)) $type = TokenType::IDENTIFIER;
+
+        $this->addToken($type);
+    }
+
+    private function isAlpha(string $c): bool
+    {
+        return ($c >= 'a' && $c <= 'z')
+            || ($c >= 'A' && $c <= 'Z')
+            || $c == '_';
+    }
+
+    private function isAlphaNumeric(string $c): bool {
+        return $this->isAlpha($c) || $this->isDigit($c);
     }
 }
