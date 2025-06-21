@@ -13,11 +13,25 @@ if ($argc < 3) {
 $command = $argv[1];
 $filename = $argv[2];
 
-if ($command !== "tokenize") {
-    fwrite(STDERR, "Unknown command: {$command}\n");
-    exit(1);
+$fileContents = file_get_contents($filename);
+Lox::tokenize($fileContents);
+
+foreach (Lox::$errors as $error) {
+    fwrite(STDERR, $error.PHP_EOL);
 }
 
-$fileContents = file_get_contents($filename);
+switch ($command) {
+    case "tokenize":
+        Lox::printTokens();
+        if (Lox::$hadError) {
+            exit(65);
+        }
+        break;
+    case "parse":
+        Lox::parse();
+        break;
+    default:
+        fwrite(STDERR, "Unknown command: {$command}\n");
+        exit(1);
 
-Lox::run($fileContents);
+}

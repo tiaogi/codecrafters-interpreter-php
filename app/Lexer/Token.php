@@ -1,8 +1,8 @@
 <?php
 
-namespace App;
+namespace App\Lexer;
 
-use App\Enum\TokenType;
+use App\Lexer\Enum\TokenType;
 
 class Token
 {
@@ -21,6 +21,21 @@ class Token
     public function getType(): TokenType
     {
         return $this->type;
+    }
+
+    public function getLexeme(): string
+    {
+        return $this->lexeme;
+    }
+
+    public function getLiteral(): string|float|null
+    {
+        return $this->literal;
+    }
+
+    public function getLine(): int
+    {
+        return $this->line;
     }
 
     private function getLiteralForDisplay(): string

@@ -1,8 +1,9 @@
 <?php
 
-namespace App;
+namespace App\Lexer;
 
-use App\Enum\TokenType;
+use App\Lexer\Enum\TokenType;
+use App\Lox;
 
 class Lexer
 {
@@ -71,7 +72,7 @@ class Lexer
                    $this->identifier();
                 }
                 else {
-                    Lox::error($this->line, "Unexpected character: $c");
+                    Lox::lexerError($this->line, "Unexpected character: $c");
                 }
                     break;
             }
@@ -120,7 +121,7 @@ class Lexer
         }
 
         if ($this->isAtEnd()) {
-            Lox::error($this->line, "Unterminated string.");
+            Lox::lexerError($this->line, "Unterminated string.");
             return;
         }
 

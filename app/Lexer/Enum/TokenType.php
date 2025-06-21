@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Enum;
+namespace App\Lexer\Enum;
 
 enum TokenType: string
 {

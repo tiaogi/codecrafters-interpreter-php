@@ -2,39 +2,63 @@
 
 namespace App;
 
-use App\Token;
+use App\AST\ASTPrinter;
+use App\AST\Parser;
+use App\Lexer\Enum\TokenType;
+use App\Lexer\Lexer;
+use App\Lexer\Token;
 
 class Lox
 {
     public static bool $hadError = false;
+    public static array $tokens = [];
+    public static array $errors = [];
 
-    static function run(string $source): void
+    static function tokenize(string $source): void
     {
         if ($source) {
             $lexer = new Lexer($source);
             /** @var array<Token> $tokens */
-            $tokens = $lexer->tokenize();
+            self::$tokens = $lexer->tokenize();
+        }
+    }
 
-            foreach ($tokens as $token) {
-                fwrite(STDOUT, $token.PHP_EOL);
-            }
+    static function parse(): void
+    {
+        $parser = new Parser(self::$tokens);
+        $expr = $parser->parse();
+        $printer = new ASTPrinter();
+        echo $printer->print($expr) . "\n";
+    }
 
-            if (Lox::$hadError) {
-                exit(65);
-            }
-        } else {
+    static function printTokens(): void
+    {
+        if (count(self::$tokens) === 0) {
             fwrite(STDOUT, "EOF  null\n");
+        }
+
+        foreach (self::$tokens as $token) {
+            fwrite(STDOUT, $token.PHP_EOL);
         }
     }
 
     static function report(int $line, string $where, string $message): void
     {
-        fwrite(STDERR, "[line $line] Error".$where.": $message".PHP_EOL);
+        self::$errors[] = "[line $line] Error".$where.": $message";
         self::$hadError = true;
     }
 
-    static function error(int $line, string $message): void
+    static function lexerError(int $line, string $message): void
     {
         self::report($line, "", $message);
+    }
+
+    static function parserError(Token $token, string $message): void
+    {
+        if ($token->getType() === TokenType::EOF) {
+            self::report($token->getLine(), " at end", $message);
+        } else {
+            self::report($token->getLine(), " at '" + $token->getLexeme() + "'", $message);
+        }
     }
 }
