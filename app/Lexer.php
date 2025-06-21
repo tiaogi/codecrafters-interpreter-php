@@ -124,8 +124,9 @@ class Lexer
         // The closing ".
         $this->advance();
 
-        // Trim the surrounding quotes.
-        $value = substr($this->source, $this->start + 1, $this->current - 1);
+        // Trim the surrounding quotes
+        // Minus 2 because we don't want the final "
+        $value = substr($this->source, $this->start + 1, $this->current - $this->start - 2);
         $this->addToken(TokenType::STRING, $value);
     }
 
@@ -147,7 +148,7 @@ class Lexer
             }
         }
 
-        $this->addToken(TokenType::NUMBER, (float) substr($this->source, $this->start, $this->current - $this->start));
+        $this->addToken(TokenType::NUMBER, (float) substr($this->source, $this->start, $this->current - $this->start - 1));
     }
 
     private function peekNext(): string {
