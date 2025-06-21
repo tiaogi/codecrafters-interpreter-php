@@ -1,5 +1,9 @@
 <?php
+
+use App\Lox;
+
 error_reporting(E_ALL);
+require_once __DIR__ . './../autoload.php';
 
 if ($argc < 3) {
     fwrite(STDERR, "Usage: ./your_program.sh tokenize <filename>\n");
@@ -14,14 +18,6 @@ if ($command !== "tokenize") {
     exit(1);
 }
 
-$file_contents = file_get_contents($filename);
+$fileContents = file_get_contents($filename);
 
-// You can use print statements as follows for debugging, they'll be visible when running tests.
-fwrite(STDERR, "Logs from your program will appear here!\n");
-
-// Uncomment this block to pass the first stage
-if ($file_contents) {
-    throw new Exception("Scanner not implemented");
-} else {
-    echo "EOF  null\n"; // Placeholder, replace this line when implementing the scanner
-}
+Lox::run($fileContents);
