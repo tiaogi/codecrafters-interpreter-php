@@ -101,7 +101,7 @@ class Lexer
         return $this->source[$this->current++];
     }
 
-    private function addToken(TokenType $type, string|float|null $literal = null): void
+    private function addToken(TokenType $type, mixed $literal = null): void
     {
         $text = substr($this->source, $this->start, $this->current - $this->start);
         $this->tokens[] = new Token($type, $text, $literal, $this->line);

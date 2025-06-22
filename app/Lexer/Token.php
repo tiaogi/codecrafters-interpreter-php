@@ -9,7 +9,7 @@ class Token
     public function __construct(
         private TokenType $type,
         private string $lexeme,
-        private string|float|null $literal,
+        private mixed $literal,
         private int $line,
     ) {}
 
@@ -28,7 +28,7 @@ class Token
         return $this->lexeme;
     }
 
-    public function getLiteral(): string|float|null
+    public function getLiteral(): mixed
     {
         return $this->literal;
     }

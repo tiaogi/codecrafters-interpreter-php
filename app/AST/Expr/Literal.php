@@ -7,15 +7,15 @@ use App\AST\Visitor;
 class Literal extends Expr
 {
     public function __construct(
-        private string|float|bool|null $value
+        private mixed $value
     ) {}
 
-    public function accept(Visitor $visitor): string
+    public function accept(Visitor $visitor): mixed
     {
         return $visitor->visitLiteral($this);
     }
 
-    public function getValue(): string|float|bool|null
+    public function getValue(): mixed
     {
         return $this->value;
     }

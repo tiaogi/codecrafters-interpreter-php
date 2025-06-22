@@ -4,16 +4,22 @@ namespace App;
 
 use App\AST\ASTPrinter;
 use App\AST\Parser;
+use App\Exception\RuntimeError;
+use App\Interpreter\Interpreter;
 use App\Lexer\Enum\TokenType;
 use App\Lexer\Lexer;
 use App\Lexer\Token;
 
 class Lox
 {
-    public static bool  $hadError   = false;
-    public static array $tokens     = [];
-    public static array $errors     = [];
-    public static array $exprs      = [];
+    public static array $tokens             = [];
+    public static array $exprs              = [];
+    public static bool  $hadLexerError      = false;
+    public static bool  $hadParserError     = false;
+    public static bool  $hadRuntimeError    = false;
+    public static array $lexerErrors        = [];
+    public static array $parserErrors       = [];
+    public static array $interpreterErrors  = [];
 
     static function tokenize(string $source): void
     {
@@ -30,6 +36,12 @@ class Lox
         self::$exprs[] = $parser->parse();
     }
 
+    static function evaluate(): void
+    {
+        $interpreter = new Interpreter();
+        foreach (self::$exprs as $expr) $interpreter->interpret($expr);
+    }
+
     static function printTokens(): void
     {
         if (count(self::$tokens) === 0) {
@@ -43,31 +55,34 @@ class Lox
 
     static function printAST(): void
     {
-        if (self::$hadError) {
-            foreach (self::$errors as $error) fwrite(STDERR, $error.PHP_EOL);
+        if (self::$hadParserError) {
+            foreach (self::$parserErrors as $error) fwrite(STDERR, $error.PHP_EOL);
             return;
         }
 
         foreach (self::$exprs as $expr) fwrite(STDOUT, (new ASTPrinter())->print($expr).PHP_EOL);
     }
 
-    static function report(int $line, string $where, string $message): void
-    {
-        self::$errors[] = "[line $line] Error".$where.": $message";
-        self::$hadError = true;
-    }
-
     static function lexerError(int $line, string $message): void
     {
-        self::report($line, "", $message);
+        self::$lexerErrors[] = "[line $line] Error: $message";
+        self::$hadLexerError = true;
     }
 
     static function parserError(Token $token, string $message): void
     {
+        $line = $token->getLine();
         if ($token->getType() === TokenType::EOF) {
-            self::report($token->getLine(), " at end", $message);
+            self::$parserErrors[] = "[line $line] Error at end: $message";
         } else {
-            self::report($token->getLine(), " at '".$token->getLexeme()."'", $message);
+            self::$parserErrors[] = "[line $line] Error at '".$token->getLexeme()."': $message";
         }
+        self::$hadParserError = true;
+    }
+
+    static function runtimeError(RuntimeError $error): void
+    {
+        fwrite(STDERR, $error->getMessage().PHP_EOL."[line ".$error->token->getLine()."]");
+        self::$hadRuntimeError = true;
     }
 }

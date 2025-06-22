@@ -12,7 +12,7 @@ class Unary extends Expr
         private Expr $right
     ) {}
 
-    public function accept(Visitor $visitor): string
+    public function accept(Visitor $visitor): mixed
     {
         return $visitor->visitUnary($this);
     }

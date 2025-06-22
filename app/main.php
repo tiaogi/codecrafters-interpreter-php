@@ -15,23 +15,31 @@ $filename = $argv[2];
 
 $fileContents = file_get_contents($filename);
 Lox::tokenize($fileContents);
+if (count(Lox::$tokens) > 0) {
+    Lox::parse();
+}
 
-foreach (Lox::$errors as $error) {
+foreach (Lox::$lexerErrors as $error) {
     fwrite(STDERR, $error.PHP_EOL);
 }
 
 switch ($command) {
     case "tokenize":
         Lox::printTokens();
-        if (Lox::$hadError) {
+        if (Lox::$hadLexerError) {
             exit(65);
         }
         break;
     case "parse":
-        Lox::parse();
         Lox::printAST();
-        if (Lox::$hadError) {
+        if (Lox::$hadParserError) {
             exit(65);
+        }
+        break;
+    case "evaluate":
+        Lox::evaluate();
+        if (Lox::$hadRuntimeError) {
+            exit(70);
         }
         break;
     default:

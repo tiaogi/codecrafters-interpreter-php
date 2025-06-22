@@ -10,7 +10,7 @@ class Grouping extends Expr
         private Expr $expression
     ) {}
 
-    public function accept(Visitor $visitor): string
+    public function accept(Visitor $visitor): mixed
     {
         return $visitor->visitGrouping($this);
     }

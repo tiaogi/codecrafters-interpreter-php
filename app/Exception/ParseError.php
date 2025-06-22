@@ -1,9 +1,9 @@
 <?php
 
-namespace App\AST\Expr;
+namespace App\Exception;
 
 use Exception;
 
-class Binary extends Exception
+class ParseError extends Exception
 {
 }

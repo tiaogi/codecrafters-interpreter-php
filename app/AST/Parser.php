@@ -7,10 +7,10 @@ use App\AST\Expr\Expr;
 use App\AST\Expr\Grouping;
 use App\AST\Expr\Literal;
 use App\AST\Expr\Unary;
+use App\Exception\ParseError;
 use App\Lexer\Enum\TokenType;
 use App\Lexer\Token;
 use App\Lox;
-use ParseError;
 
 class Parser
 {

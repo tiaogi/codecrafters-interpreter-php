@@ -9,8 +9,8 @@ use App\AST\Expr\Unary;
 
 interface Visitor
 {
-    public function visitBinary(Binary $expr): string;
-    public function visitGrouping(Grouping $expr): string;
-    public function visitLiteral(Literal $expr): string;
-    public function visitUnary(Unary $expr): string;
+    public function visitBinary(Binary $expr): mixed;
+    public function visitGrouping(Grouping $expr): mixed;
+    public function visitLiteral(Literal $expr): mixed;
+    public function visitUnary(Unary $expr): mixed;
 }
