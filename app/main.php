@@ -29,6 +29,10 @@ switch ($command) {
         break;
     case "parse":
         Lox::parse();
+        Lox::printAST();
+        if (Lox::$hadError) {
+            exit(65);
+        }
         break;
     default:
         fwrite(STDERR, "Unknown command: {$command}\n");

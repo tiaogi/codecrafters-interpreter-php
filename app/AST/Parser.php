@@ -10,6 +10,7 @@ use App\AST\Expr\Unary;
 use App\Lexer\Enum\TokenType;
 use App\Lexer\Token;
 use App\Lox;
+use ParseError;
 
 class Parser
 {
@@ -19,9 +20,13 @@ class Parser
         private array $tokens
     ) {}
 
-    public function parse(): Expr
+    public function parse(): ?Expr
     {
-        return $this->expression();
+        try {
+            return $this->expression();
+        } catch (ParseError $e) {
+            return null;
+        }
     }
 
     private function expression(): Expr
@@ -92,7 +97,7 @@ class Parser
         return $this->primary();
     }
 
-    private function primary(): ?Expr
+    private function primary(): Expr
     {
         if ($this->match(TokenType::FALSE)) return new Literal(false);
         if ($this->match(TokenType::TRUE)) return new Literal(true);
@@ -110,7 +115,7 @@ class Parser
             return new Grouping($expr);
         }
 
-        return null;
+        throw $this->error($this->peek(), "Expect expression.");
     }
 
     private function match(TokenType ...$types): bool
@@ -158,8 +163,31 @@ class Parser
         return $this->tokens[$this->current - 1];
     }
 
-    private function error(Token $token, string $message): void
+    private function error(Token $token, string $message): ParseError
     {
         Lox::parserError($token, $message);
+        return new ParseError();
+    }
+
+    private function synchronize(): void {
+        $this->advance();
+
+        while (!$this->isAtEnd()) {
+            if ($this->previous()->getType() == TokenType::SEMICOLON) return;
+
+            switch ($this->peek()->getType()) {
+                case TokenType::K_CLASS:
+                case TokenType::FUN:
+                case TokenType::VAR:
+                case TokenType::FOR:
+                case TokenType::IF:
+                case TokenType::WHILE:
+                case TokenType::PRINT:
+                case TokenType::RETURN:
+                return;
+            }
+
+            $this->advance();
+        }
     }
 }

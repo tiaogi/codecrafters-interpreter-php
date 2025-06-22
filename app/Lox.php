@@ -10,9 +10,10 @@ use App\Lexer\Token;
 
 class Lox
 {
-    public static bool $hadError = false;
-    public static array $tokens = [];
-    public static array $errors = [];
+    public static bool  $hadError   = false;
+    public static array $tokens     = [];
+    public static array $errors     = [];
+    public static array $exprs      = [];
 
     static function tokenize(string $source): void
     {
@@ -26,9 +27,7 @@ class Lox
     static function parse(): void
     {
         $parser = new Parser(self::$tokens);
-        $expr = $parser->parse();
-        $printer = new ASTPrinter();
-        echo $printer->print($expr) . "\n";
+        self::$exprs[] = $parser->parse();
     }
 
     static function printTokens(): void
@@ -40,6 +39,16 @@ class Lox
         foreach (self::$tokens as $token) {
             fwrite(STDOUT, $token.PHP_EOL);
         }
+    }
+
+    static function printAST(): void
+    {
+        if (self::$hadError) {
+            foreach (self::$errors as $error) fwrite(STDERR, $error.PHP_EOL);
+            return;
+        }
+
+        foreach (self::$exprs as $expr) fwrite(STDOUT, (new ASTPrinter())->print($expr).PHP_EOL);
     }
 
     static function report(int $line, string $where, string $message): void
@@ -58,7 +67,7 @@ class Lox
         if ($token->getType() === TokenType::EOF) {
             self::report($token->getLine(), " at end", $message);
         } else {
-            self::report($token->getLine(), " at '" + $token->getLexeme() + "'", $message);
+            self::report($token->getLine(), " at '".$token->getLexeme()."'", $message);
         }
     }
 }
