@@ -3,6 +3,7 @@
 namespace App;
 
 use App\AST\ASTPrinter;
+use App\AST\Expr;
 use App\AST\Parser;
 use App\Exception\RuntimeError;
 use App\Interpreter;
@@ -13,7 +14,7 @@ use App\Lexer\Token;
 class Lox
 {
     public static array $tokens             = [];
-    public static array $exprs              = [];
+    public static ?Expr $expr               = null;
     public static array $statements         = [];
     public static bool  $hadLexerError      = false;
     public static bool  $hadParserError     = false;
@@ -40,7 +41,7 @@ class Lox
     static function evaluate(): void
     {
         $interpreter = new Interpreter(new Environment());
-        foreach (self::$exprs as $expr) $interpreter->interpretExpr($expr);
+        $interpreter->interpretExpr(self::$expr);
     }
 
     static function run(): void
@@ -52,7 +53,7 @@ class Lox
     static function parseExpr(): void
     {
         $parser = new Parser(self::$tokens);
-        self::$exprs[] = $parser->parseExpr();
+        self::$expr = $parser->parseExpr();
     }
 
     static function printTokens(): void
@@ -73,7 +74,7 @@ class Lox
             return;
         }
 
-        foreach (self::$exprs as $expr) fwrite(STDOUT, (new ASTPrinter())->print($expr).PHP_EOL);
+        fwrite(STDOUT, (new ASTPrinter())->print(self::$expr).PHP_EOL);
     }
 
     static function lexerError(int $line, string $message): void

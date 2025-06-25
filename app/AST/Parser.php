@@ -35,7 +35,7 @@ class Parser
             $statements[] = $this->declaration();
         }
 
-        return $statements;
+        return array_filter($statements);
     }
 
     public function parseExpr(): ?Expr

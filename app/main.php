@@ -15,9 +15,6 @@ $filename = $argv[2];
 
 $fileContents = file_get_contents($filename);
 Lox::tokenize($fileContents);
-if (count(Lox::$tokens) > 0) {
-    Lox::parse();
-}
 
 foreach (Lox::$lexerErrors as $error) {
     fwrite(STDERR, $error.PHP_EOL);
@@ -39,18 +36,22 @@ switch ($command) {
         break;
     case "evaluate":
         Lox::parseExpr();
+        if (Lox::$hadParserError) {
+            exit(65);
+        }
         Lox::evaluate();
         if (Lox::$hadRuntimeError) {
             exit(70);
         }
         break;
     case "run":
-        if (Lox::$hadParserError) {
+        Lox::parse();
+        if (count(Lox::$statements) === 0) {
             exit(65);
         }
         Lox::run();
         if (Lox::$hadRuntimeError) {
-            exit(65);
+            exit(70);
         }
         break;
     default:

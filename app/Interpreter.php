@@ -143,8 +143,9 @@ class Interpreter implements ExprVisitor, StmtVisitor
         return $expr->accept($this);
     }
 
-    private function execute(Stmt $stmt): void
+    private function execute(?Stmt $stmt): void
     {
+        if (is_null($stmt)) return;
         $stmt->accept($this);
     }
 
