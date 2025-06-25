@@ -8,6 +8,7 @@ use App\AST\Expr;
 use App\AST\Expr\ExprVisitor;
 use App\AST\Expr\GroupingExpr;
 use App\AST\Expr\LiteralExpr;
+use App\AST\Expr\LogicalExpr;
 use App\AST\Stmt\BlockStmt;
 use App\AST\Expr\UnaryExpr;
 use App\AST\Stmt\ExpressionStmt;
@@ -16,6 +17,8 @@ use App\AST\Stmt;
 use App\AST\Stmt\StmtVisitor;
 use App\AST\Stmt\VarStmt;
 use App\AST\Expr\VariableExpr;
+use App\AST\Stmt\IfStmt;
+use App\AST\Stmt\WhileStmt;
 use App\Environment;
 use App\Exception\RuntimeError;
 use App\Lexer\Enum\TokenType;
@@ -53,6 +56,19 @@ class Interpreter implements ExprVisitor, StmtVisitor
     public function visitLiteralExpr(LiteralExpr $expr): mixed
     {
         return $expr->getValue();
+    }
+
+    public function visitLogicalExpr(LogicalExpr $expr): mixed
+    {
+        $left = $this->evaluate($expr->getLeft());
+
+        if ($expr->getOperator()->getType() === TokenType::OR) {
+            if ($this->isTruthy($left)) return $left;
+        } else {
+            if (!$this->isTruthy($left)) return $left;
+        }
+
+        return $this->evaluate($expr->getRight());
     }
 
     public function visitGroupingExpr(GroupingExpr $expr): mixed
@@ -173,6 +189,15 @@ class Interpreter implements ExprVisitor, StmtVisitor
         $this->evaluate($stmt->getExpression());
     }
 
+    public function visitIfStmt(IfStmt $stmt): void
+    {
+        if ($this->isTruthy($this->evaluate($stmt->getCondition()))) {
+            $this->execute($stmt->getThenBranch());
+        } else if (!is_null($stmt->getElseBranch())) {
+            $this->execute($stmt->getElseBranch());
+        }
+    }
+
     public function visitPrintStmt(PrintStmt $stmt): void
     {
         $value = $this->evaluate($stmt->getExpression());
@@ -187,6 +212,13 @@ class Interpreter implements ExprVisitor, StmtVisitor
         }
 
         $this->environment->define($stmt->getName()->getLexeme(), $value);
+    }
+
+    public function visitWhileStmt(WhileStmt $stmt): void
+    {
+        while ($this->isTruthy($this->evaluate($stmt->getCondition()))) {
+            $this->execute($stmt->getBody());
+        }
     }
 
     public function visitAssignExpr(AssignExpr $expr): mixed

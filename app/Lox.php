@@ -4,7 +4,7 @@ namespace App;
 
 use App\AST\ASTPrinter;
 use App\AST\Expr;
-use App\AST\Parser;
+use App\Parser;
 use App\Exception\RuntimeError;
 use App\Interpreter;
 use App\Lexer\Enum\TokenType;

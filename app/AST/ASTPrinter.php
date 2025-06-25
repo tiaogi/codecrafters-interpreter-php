@@ -10,6 +10,7 @@ use App\AST\Expr\ExprVisitor;
 use App\AST\Expr\LiteralExpr;
 use App\AST\Expr\VariableExpr;
 use App\AST\Expr\GroupingExpr;
+use App\AST\Expr\LogicalExpr;
 
 class ASTPrinter implements ExprVisitor
 {
@@ -46,6 +47,11 @@ class ASTPrinter implements ExprVisitor
     public function visitAssignExpr(AssignExpr $expr): string
     {
         return $this->parenthesize($expr->getName()->getLexeme(), $expr->getValue());
+    }
+
+    public function visitLogicalExpr(LogicalExpr $expr): string
+    {
+        return $this->parenthesize($expr->getOperator()->getLexeme(), $expr->getLeft(), $expr->getRight());
     }
 
     private function parenthesize(string $name, Expr ...$exprs): string

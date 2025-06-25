@@ -1,12 +1,13 @@
 <?php
 
-namespace App\AST;
+namespace App;
 
 use App\AST\Expr\AssignExpr;
 use App\AST\Expr\BinaryExpr;
 use App\AST\Expr;
 use App\AST\Expr\GroupingExpr;
 use App\AST\Expr\LiteralExpr;
+use App\AST\Expr\LogicalExpr;
 use App\AST\Stmt\BlockStmt;
 use App\AST\Expr\UnaryExpr;
 use App\AST\Stmt\ExpressionStmt;
@@ -14,6 +15,8 @@ use App\AST\Stmt\PrintStmt;
 use App\AST\Stmt;
 use App\AST\Stmt\VarStmt;
 use App\AST\Expr\VariableExpr;
+use App\AST\Stmt\IfStmt;
+use App\AST\Stmt\WhileStmt;
 use App\Exception\ParseError;
 use App\Lexer\Enum\TokenType;
 use App\Lexer\Token;
@@ -65,10 +68,69 @@ class Parser
 
     private function statement(): Stmt
     {
+        if ($this->match(TokenType::FOR)) return $this->forStatement();
+        if ($this->match(TokenType::IF)) return $this->ifStatement();
         if ($this->match(TokenType::PRINT)) return $this->printStatement();
+        if ($this->match(TokenType::WHILE)) return $this->whileStatement();
         if ($this->match(TokenType::LEFT_BRACE)) return new BlockStmt($this->block());
 
         return $this->expressionStatement();
+    }
+
+    private function forStatement(): Stmt
+    {
+        $this->consume(TokenType::LEFT_PAREN, "Expect '(' after 'for'.");
+
+        $initializer = null;
+        if ($this->match(TokenType::SEMICOLON)) {
+            $initializer = null;
+        } else if ($this->match(TokenType::VAR)) {
+            $initializer = $this->varDeclaration();
+        } else {
+            $initializer = $this->expressionStatement();
+        }
+
+        $condition = null;
+        if (!$this->check(TokenType::SEMICOLON)) {
+            $condition = $this->expression();
+        }
+        $this->consume(TokenType::SEMICOLON, "Expect ';' after loop condition.");
+
+        $increment = null;
+        if (!$this->check(TokenType::RIGHT_PAREN)) {
+            $increment = $this->expression();
+        }
+        $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after for clauses.");
+
+        $body = $this->statement();
+
+        if (!is_null($increment)) {
+            $body = new BlockStmt([$body, new ExpressionStmt($increment)]);
+        }
+
+        if (is_null($condition)) $condition = new LiteralExpr(true);
+        $body = new WhileStmt($condition, $body);
+
+        if (!is_null($initializer)) {
+            $body = new BlockStmt([$initializer, $body]);
+        }
+
+        return $body;
+    }
+
+    private function ifStatement(): Stmt
+    {
+        $this->consume(TokenType::LEFT_PAREN, "Expect '(' after 'if'.");
+        $condition = $this->expression();
+        $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after if condition.");
+
+        $thenBranch = $this->statement();
+        $elseBranch = null;
+        if ($this->match(TokenType::ELSE)) {
+            $elseBranch = $this->statement();
+        }
+
+        return new IfStmt($condition, $thenBranch, $elseBranch);
     }
 
     private function printStatement(): Stmt
@@ -91,10 +153,20 @@ class Parser
         return new VarStmt($name, $initializer);
     }
 
+    private function whileStatement(): Stmt
+    {
+        $this->consume(TokenType::LEFT_PAREN, "Expect '(' after 'while'.");
+        $condition = $this->expression();
+        $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after condition.");
+        $body = $this->statement();
+
+        return new WhileStmt($condition, $body);
+    }
+
     private function expressionStatement(): Stmt
     {
         $expr = $this->expression();
-        // $this->consume(TokenType::SEMICOLON, "Expect ';' after expression.");
+        $this->consume(TokenType::SEMICOLON, "Expect ';' after expression.");
         return new ExpressionStmt($expr);
     }
 
@@ -112,7 +184,7 @@ class Parser
 
     private function assignment(): Expr
     {
-        $expr = $this->equality();
+        $expr = $this->or();
 
         if ($this->match(TokenType::EQUAL)) {
             $equals = $this->previous();
@@ -124,6 +196,32 @@ class Parser
             }
 
             $this->error($equals, "Invalid assignment target.");
+        }
+
+        return $expr;
+    }
+
+    private function or(): Expr
+    {
+        $expr = $this->and();
+
+        while ($this->match(TokenType::OR)) {
+            $operator = $this->previous();
+            $right = $this->and();
+            $expr = new LogicalExpr($expr, $operator, $right);
+        }
+
+        return $expr;
+    }
+
+    private function and(): Expr
+    {
+        $expr = $this->equality();
+
+        while ($this->match(TokenType::AND)) {
+            $operator = $this->previous();
+            $right = $this->equality();
+            $expr = new LogicalExpr($expr, $operator, $right);
         }
 
         return $expr;

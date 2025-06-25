@@ -10,4 +10,5 @@ interface ExprVisitor
     public function visitUnaryExpr(UnaryExpr $expr): mixed;
     public function visitVariableExpr(VariableExpr $expr): mixed;
     public function visitAssignExpr(AssignExpr $expr): mixed;
+    public function visitLogicalExpr(LogicalExpr $expr): mixed;
 }
