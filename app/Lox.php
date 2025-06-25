@@ -96,7 +96,7 @@ class Lox
 
     static function runtimeError(RuntimeError $error): void
     {
-        fwrite(STDERR, $error->getMessage().PHP_EOL."[line ".$error->token->getLine()."]");
+        fwrite(STDERR, "[line ".$error->token->getLine()."] ".$error->getMessage().PHP_EOL);
         self::$hadRuntimeError = true;
     }
 }

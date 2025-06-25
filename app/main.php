@@ -46,7 +46,7 @@ switch ($command) {
         break;
     case "run":
         Lox::parse();
-        if (count(Lox::$statements) === 0) {
+        if (count(Lox::$statements) === 0 || Lox::$hadParserError) {
             exit(65);
         }
         Lox::run();
