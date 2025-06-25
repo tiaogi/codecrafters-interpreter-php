@@ -2,10 +2,10 @@
 
 namespace App\AST\Expr;
 
+use App\AST\Expr;
 use App\Lexer\Token;
-use App\AST\Visitor;
 
-class Binary extends Expr
+class BinaryExpr extends Expr
 {
     public function __construct(
         private Expr $left,
@@ -13,9 +13,9 @@ class Binary extends Expr
         private Expr $right
     ) {}
 
-    public function accept(Visitor $visitor): mixed
+    public function accept(ExprVisitor $visitor): mixed
     {
-        return $visitor->visitBinary($this);
+        return $visitor->visitBinaryExpr($this);
     }
 
     public function getLeft(): Expr

@@ -2,17 +2,17 @@
 
 namespace App\AST\Expr;
 
-use App\AST\Visitor;
+use App\AST\Expr;
 
-class Grouping extends Expr
+class GroupingExpr extends Expr
 {
     public function __construct(
         private Expr $expression
     ) {}
 
-    public function accept(Visitor $visitor): mixed
+    public function accept(ExprVisitor $visitor): mixed
     {
-        return $visitor->visitGrouping($this);
+        return $visitor->visitGroupingExpr($this);
     }
 
     public function getExpression(): Expr

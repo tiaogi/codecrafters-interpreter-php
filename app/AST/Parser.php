@@ -2,11 +2,18 @@
 
 namespace App\AST;
 
-use App\AST\Expr\Binary;
-use App\AST\Expr\Expr;
-use App\AST\Expr\Grouping;
-use App\AST\Expr\Literal;
-use App\AST\Expr\Unary;
+use App\AST\Expr\AssignExpr;
+use App\AST\Expr\BinaryExpr;
+use App\AST\Expr;
+use App\AST\Expr\GroupingExpr;
+use App\AST\Expr\LiteralExpr;
+use App\AST\Stmt\BlockStmt;
+use App\AST\Expr\UnaryExpr;
+use App\AST\Stmt\ExpressionStmt;
+use App\AST\Stmt\PrintStmt;
+use App\AST\Stmt;
+use App\AST\Stmt\VarStmt;
+use App\AST\Expr\VariableExpr;
 use App\Exception\ParseError;
 use App\Lexer\Enum\TokenType;
 use App\Lexer\Token;
@@ -20,7 +27,18 @@ class Parser
         private array $tokens
     ) {}
 
-    public function parse(): ?Expr
+    public function parse(): array
+    {
+        $statements = [];
+
+        while (!$this->isAtEnd()) {
+            $statements[] = $this->declaration();
+        }
+
+        return $statements;
+    }
+
+    public function parseExpr(): ?Expr
     {
         try {
             return $this->expression();
@@ -31,7 +49,84 @@ class Parser
 
     private function expression(): Expr
     {
-        return $this->equality();
+        return $this->assignment();
+    }
+
+    private function declaration(): ?Stmt
+    {
+        try {
+            if ($this->match(TokenType::VAR)) return $this->varDeclaration();
+            return $this->statement();
+        } catch (ParseError $e) {
+            $this->synchronize();
+            return null;
+        }
+    }
+
+    private function statement(): Stmt
+    {
+        if ($this->match(TokenType::PRINT)) return $this->printStatement();
+        if ($this->match(TokenType::LEFT_BRACE)) return new BlockStmt($this->block());
+
+        return $this->expressionStatement();
+    }
+
+    private function printStatement(): Stmt
+    {
+        $value = $this->expression();
+        $this->consume(TokenType::SEMICOLON, "Expect ';' after value.");
+        return new PrintStmt($value);
+    }
+
+    private function varDeclaration(): Stmt
+    {
+        $name = $this->consume(TokenType::IDENTIFIER, "Expect variable name.");
+
+        $initializer = null;
+        if ($this->match(TokenType::EQUAL)) {
+            $initializer = $this->expression();
+        }
+
+        $this->consume(TokenType::SEMICOLON, "Expect ';' after variable declaration.");
+        return new VarStmt($name, $initializer);
+    }
+
+    private function expressionStatement(): Stmt
+    {
+        $expr = $this->expression();
+        // $this->consume(TokenType::SEMICOLON, "Expect ';' after expression.");
+        return new ExpressionStmt($expr);
+    }
+
+    private function block(): array
+    {
+        $statements = [];
+
+        while (!$this->check(TokenType::RIGHT_BRACE) && !$this->isAtEnd()) {
+            $statements[] = $this->declaration();
+        }
+
+        $this->consume(TokenType::RIGHT_BRACE, "Expect '}' after block.");
+        return $statements;
+    }
+
+    private function assignment(): Expr
+    {
+        $expr = $this->equality();
+
+        if ($this->match(TokenType::EQUAL)) {
+            $equals = $this->previous();
+            $value = $this->assignment();
+
+            if (is_a($expr, VariableExpr::class)) {
+                $name = $expr->getName();
+                return new AssignExpr($name, $value);
+            }
+
+            $this->error($equals, "Invalid assignment target.");
+        }
+
+        return $expr;
     }
 
     private function equality(): Expr
@@ -41,7 +136,7 @@ class Parser
         while ($this->match(TokenType::BANG_EQUAL, TokenType::EQUAL_EQUAL)) {
             $operator = $this->previous();
             $right = $this->comparison();
-            $expr = new Binary($expr, $operator, $right);
+            $expr = new BinaryExpr($expr, $operator, $right);
         }
 
         return $expr;
@@ -54,7 +149,7 @@ class Parser
         while ($this->match(TokenType::GREATER, TokenType::GREATER_EQUAL, TokenType::LESS, TokenType::LESS_EQUAL)) {
             $operator = $this->previous();
             $right = $this->term();
-            $expr = new Binary($expr, $operator, $right);
+            $expr = new BinaryExpr($expr, $operator, $right);
         }
 
         return $expr;
@@ -67,7 +162,7 @@ class Parser
         while ($this->match(TokenType::MINUS, TokenType::PLUS)) {
             $operator = $this->previous();
             $right = $this->factor();
-            $expr = new Binary($expr, $operator, $right);
+            $expr = new BinaryExpr($expr, $operator, $right);
         }
 
         return $expr;
@@ -80,7 +175,7 @@ class Parser
         while ($this->match(TokenType::SLASH, TokenType::STAR)) {
             $operator = $this->previous();
             $right = $this->unary();
-            $expr = new Binary($expr, $operator, $right);
+            $expr = new BinaryExpr($expr, $operator, $right);
         }
 
         return $expr;
@@ -91,7 +186,7 @@ class Parser
         if ($this->match(TokenType::BANG, TokenType::MINUS)) {
             $operator = $this->previous();
             $right = $this->unary();
-            return new Unary($operator, $right);
+            return new UnaryExpr($operator, $right);
         }
 
         return $this->primary();
@@ -99,20 +194,24 @@ class Parser
 
     private function primary(): Expr
     {
-        if ($this->match(TokenType::FALSE)) return new Literal(false);
-        if ($this->match(TokenType::TRUE)) return new Literal(true);
-        if ($this->match(TokenType::NIL)) return new Literal(null);
+        if ($this->match(TokenType::FALSE)) return new LiteralExpr(false);
+        if ($this->match(TokenType::TRUE)) return new LiteralExpr(true);
+        if ($this->match(TokenType::NIL)) return new LiteralExpr(null);
 
         if ($this->match(TokenType::NUMBER, TokenType::STRING)) {
             /** @var Token $previousToken */
             $previousToken = $this->previous();
-            return new Literal($previousToken->getLiteral());
+            return new LiteralExpr($previousToken->getLiteral());
+        }
+
+        if ($this->match(TokenType::IDENTIFIER)) {
+            return new VariableExpr($this->previous());
         }
 
         if ($this->match(TokenType::LEFT_PAREN)) {
             $expr = $this->expression();
             $this->consume(TokenType::RIGHT_PAREN, "Expect ')' after expression.");
-            return new Grouping($expr);
+            return new GroupingExpr($expr);
         }
 
         throw $this->error($this->peek(), "Expect expression.");

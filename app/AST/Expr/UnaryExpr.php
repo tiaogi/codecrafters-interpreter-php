@@ -2,19 +2,19 @@
 
 namespace App\AST\Expr;
 
+use App\AST\Expr;
 use App\Lexer\Token;
-use App\AST\Visitor;
 
-class Unary extends Expr
+class UnaryExpr extends Expr
 {
     public function __construct(
         private Token $operator,
         private Expr $right
     ) {}
 
-    public function accept(Visitor $visitor): mixed
+    public function accept(ExprVisitor $visitor): mixed
     {
-        return $visitor->visitUnary($this);
+        return $visitor->visitUnaryExpr($this);
     }
 
     public function getOperator(): Token

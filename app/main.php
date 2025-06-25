@@ -31,15 +31,26 @@ switch ($command) {
         }
         break;
     case "parse":
-        Lox::printAST();
+        Lox::parseExpr();
+        Lox::printASTExpr();
         if (Lox::$hadParserError) {
             exit(65);
         }
         break;
     case "evaluate":
+        Lox::parseExpr();
         Lox::evaluate();
         if (Lox::$hadRuntimeError) {
             exit(70);
+        }
+        break;
+    case "run":
+        if (Lox::$hadParserError) {
+            exit(65);
+        }
+        Lox::run();
+        if (Lox::$hadRuntimeError) {
+            exit(65);
         }
         break;
     default:

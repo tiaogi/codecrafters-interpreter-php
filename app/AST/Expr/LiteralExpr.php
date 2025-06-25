@@ -2,17 +2,17 @@
 
 namespace App\AST\Expr;
 
-use App\AST\Visitor;
+use App\AST\Expr;
 
-class Literal extends Expr
+class LiteralExpr extends Expr
 {
     public function __construct(
         private mixed $value
     ) {}
 
-    public function accept(Visitor $visitor): mixed
+    public function accept(ExprVisitor $visitor): mixed
     {
-        return $visitor->visitLiteral($this);
+        return $visitor->visitLiteralExpr($this);
     }
 
     public function getValue(): mixed

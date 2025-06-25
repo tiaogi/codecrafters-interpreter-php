@@ -5,15 +5,16 @@ namespace App;
 use App\AST\ASTPrinter;
 use App\AST\Parser;
 use App\Exception\RuntimeError;
-use App\Interpreter\Interpreter;
+use App\Interpreter;
 use App\Lexer\Enum\TokenType;
-use App\Lexer\Lexer;
+use App\Lexer;
 use App\Lexer\Token;
 
 class Lox
 {
     public static array $tokens             = [];
     public static array $exprs              = [];
+    public static array $statements         = [];
     public static bool  $hadLexerError      = false;
     public static bool  $hadParserError     = false;
     public static bool  $hadRuntimeError    = false;
@@ -33,13 +34,25 @@ class Lox
     static function parse(): void
     {
         $parser = new Parser(self::$tokens);
-        self::$exprs[] = $parser->parse();
+        self::$statements = $parser->parse();
     }
 
     static function evaluate(): void
     {
-        $interpreter = new Interpreter();
-        foreach (self::$exprs as $expr) $interpreter->interpret($expr);
+        $interpreter = new Interpreter(new Environment());
+        foreach (self::$exprs as $expr) $interpreter->interpretExpr($expr);
+    }
+
+    static function run(): void
+    {
+        $interpreter = new Interpreter(new Environment());
+        $interpreter->interpret(self::$statements);
+    }
+
+    static function parseExpr(): void
+    {
+        $parser = new Parser(self::$tokens);
+        self::$exprs[] = $parser->parseExpr();
     }
 
     static function printTokens(): void
@@ -53,7 +66,7 @@ class Lox
         }
     }
 
-    static function printAST(): void
+    static function printASTExpr(): void
     {
         if (self::$hadParserError) {
             foreach (self::$parserErrors as $error) fwrite(STDERR, $error.PHP_EOL);

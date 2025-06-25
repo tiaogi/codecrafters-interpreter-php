@@ -2,37 +2,50 @@
 
 namespace App\AST;
 
-use App\AST\Expr\Binary;
-use App\AST\Expr\Expr;
-use App\AST\Expr\Grouping;
-use App\AST\Expr\Literal;
-use App\AST\Expr\Unary;
+use App\AST\Expr;
+use App\AST\Expr\UnaryExpr;
+use App\AST\Expr\AssignExpr;
+use App\AST\Expr\BinaryExpr;
+use App\AST\Expr\ExprVisitor;
+use App\AST\Expr\LiteralExpr;
+use App\AST\Expr\VariableExpr;
+use App\AST\Expr\GroupingExpr;
 
-class ASTPrinter implements Visitor
+class ASTPrinter implements ExprVisitor
 {
     public function print(Expr $expr): string
     {
         return $expr->accept($this);
     }
 
-    public function visitBinary(Binary $expr): string
+    public function visitBinaryExpr(BinaryExpr $expr): string
     {
         return $this->parenthesize($expr->getOperator()->getLexeme(), $expr->getLeft(), $expr->getRight());
     }
 
-    public function visitGrouping(Grouping $expr): string
+    public function visitGroupingExpr(GroupingExpr $expr): string
     {
         return $this->parenthesize("group", $expr->getExpression());
     }
 
-    public function visitLiteral(Literal $expr): string
+    public function visitLiteralExpr(LiteralExpr $expr): string
     {
         return $expr->getDisplayableValue();
     }
 
-    public function visitUnary(Unary $expr): string
+    public function visitUnaryExpr(UnaryExpr $expr): string
     {
         return $this->parenthesize($expr->getOperator()->getLexeme(), $expr->getRight());
+    }
+
+    public function visitVariableExpr(VariableExpr $expr): string
+    {
+        return $this->parenthesize($expr->getName()->getLexeme());
+    }
+
+    public function visitAssignExpr(AssignExpr $expr): string
+    {
+        return $this->parenthesize($expr->getName()->getLexeme(), $expr->getValue());
     }
 
     private function parenthesize(string $name, Expr ...$exprs): string

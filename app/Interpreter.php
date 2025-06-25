@@ -1,21 +1,46 @@
 <?php
 
-namespace App\Interpreter;
+namespace App;
 
-use App\AST\Expr\Binary;
-use App\AST\Expr\Expr;
-use App\AST\Expr\Grouping;
-use App\AST\Expr\Literal;
-use App\AST\Expr\Unary;
-use App\AST\Visitor;
+use App\AST\Expr\AssignExpr;
+use App\AST\Expr\BinaryExpr;
+use App\AST\Expr;
+use App\AST\Expr\ExprVisitor;
+use App\AST\Expr\GroupingExpr;
+use App\AST\Expr\LiteralExpr;
+use App\AST\Stmt\BlockStmt;
+use App\AST\Expr\UnaryExpr;
+use App\AST\Stmt\ExpressionStmt;
+use App\AST\Stmt\PrintStmt;
+use App\AST\Stmt;
+use App\AST\Stmt\StmtVisitor;
+use App\AST\Stmt\VarStmt;
+use App\AST\Expr\VariableExpr;
+use App\Environment;
 use App\Exception\RuntimeError;
 use App\Lexer\Enum\TokenType;
 use App\Lexer\Token;
 use App\Lox;
 
-class Interpreter implements Visitor
+class Interpreter implements ExprVisitor, StmtVisitor
 {
-    public function interpret(Expr $expression): void
+    public function __construct(
+        private Environment $environment
+    ) {}
+
+    public function interpret(array $statements): void
+    {
+        try {
+            /** @var array<Stmt> $statements */
+            foreach ($statements as $statement) {
+                $this->execute($statement);
+            }
+        } catch (RuntimeError $e) {
+            Lox::runtimeError($e);
+        }
+    }
+
+    public function interpretExpr(Expr $expression): void
     {
         try {
             $value = $this->evaluate($expression);
@@ -25,17 +50,17 @@ class Interpreter implements Visitor
         }
     }
 
-    public function visitLiteral(Literal $expr): mixed
+    public function visitLiteralExpr(LiteralExpr $expr): mixed
     {
         return $expr->getValue();
     }
 
-    public function visitGrouping(Grouping $expr): mixed
+    public function visitGroupingExpr(GroupingExpr $expr): mixed
     {
         return $this->evaluate($expr->getExpression());
     }
 
-    public function visitUnary(Unary $expr): mixed
+    public function visitUnaryExpr(UnaryExpr $expr): mixed
     {
         $right = $this->evaluate($expr->getRight());
 
@@ -51,6 +76,11 @@ class Interpreter implements Visitor
         return null;
     }
 
+    public function visitVariableExpr(VariableExpr $expr): mixed
+    {
+        return $this->environment->get($expr->getName());
+    }
+
     private function checkNumberOperand(Token $operator, mixed $operand): void
     {
         if (is_float($operand)) return;
@@ -63,7 +93,7 @@ class Interpreter implements Visitor
         throw new RuntimeError($operator, "Operands must be numbers.");
     }
 
-    public function visitBinary(Binary $expr): mixed
+    public function visitBinaryExpr(BinaryExpr $expr): mixed
     {
         $left = $this->evaluate($expr->getLeft());
         $right = $this->evaluate($expr->getRight());
@@ -111,6 +141,58 @@ class Interpreter implements Visitor
     private function evaluate(Expr $expr): mixed
     {
         return $expr->accept($this);
+    }
+
+    private function execute(Stmt $stmt): void
+    {
+        $stmt->accept($this);
+    }
+
+    public function executeBlock(array $statements, Environment $environment): void
+    {
+        $previous = $this->environment;
+        try {
+            $this->environment = $environment;
+
+            foreach ($statements as $statement) {
+                $this->execute($statement);
+            }
+        } finally {
+            $this->environment = $previous;
+        }
+    }
+
+    public function visitBlockStmt(BlockStmt $stmt): void
+    {
+        $this->executeBlock($stmt->getStatements(), new Environment($this->environment));
+    }
+
+    public function visitExpressionStmt(ExpressionStmt $stmt): void
+    {
+        $this->evaluate($stmt->getExpression());
+    }
+
+    public function visitPrintStmt(PrintStmt $stmt): void
+    {
+        $value = $this->evaluate($stmt->getExpression());
+        fwrite(STDOUT, $this->stringify($value).PHP_EOL);
+    }
+
+    public function visitVarStmt(VarStmt $stmt): void
+    {
+        $value = null;
+        if (!is_null($stmt->getInitializer())) {
+            $value = $this->evaluate($stmt->getInitializer());
+        }
+
+        $this->environment->define($stmt->getName()->getLexeme(), $value);
+    }
+
+    public function visitAssignExpr(AssignExpr $expr): mixed
+    {
+        $value = $this->evaluate($expr->getValue());
+        $this->environment->assign($expr->getName(), $value);
+        return $value;
     }
 
     private function isTruthy(mixed $object): bool

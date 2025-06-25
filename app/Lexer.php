@@ -1,8 +1,9 @@
 <?php
 
-namespace App\Lexer;
+namespace App;
 
 use App\Lexer\Enum\TokenType;
+use App\Lexer\Token;
 use App\Lox;
 
 class Lexer
