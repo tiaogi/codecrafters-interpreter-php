@@ -5,6 +5,7 @@ namespace App;
 use App\AST\Expr\AssignExpr;
 use App\AST\Expr\BinaryExpr;
 use App\AST\Expr;
+use App\AST\Expr\CallExpr;
 use App\AST\Expr\ExprVisitor;
 use App\AST\Expr\GroupingExpr;
 use App\AST\Expr\LiteralExpr;
@@ -17,9 +18,15 @@ use App\AST\Stmt;
 use App\AST\Stmt\StmtVisitor;
 use App\AST\Stmt\VarStmt;
 use App\AST\Expr\VariableExpr;
+use App\AST\Stmt\FunctionStmt;
 use App\AST\Stmt\IfStmt;
+use App\AST\Stmt\ReturnStmt;
 use App\AST\Stmt\WhileStmt;
+use App\Callable\Clock;
+use App\Callable\LoxCallable;
+use App\Callable\LoxFunction;
 use App\Environment;
+use App\Exception\ReturnException;
 use App\Exception\RuntimeError;
 use App\Lexer\Enum\TokenType;
 use App\Lexer\Token;
@@ -27,9 +34,15 @@ use App\Lox;
 
 class Interpreter implements ExprVisitor, StmtVisitor
 {
-    public function __construct(
-        private Environment $environment
-    ) {}
+    private readonly Environment $globals;
+    private Environment $environment;
+
+    public function __construct() {
+        $this->globals = new Environment();
+        $this->globals->define("clock", new Clock);
+
+        $this->environment = $this->globals;
+    }
 
     public function interpret(array $statements): void
     {
@@ -154,6 +167,26 @@ class Interpreter implements ExprVisitor, StmtVisitor
         return null;
     }
 
+    public function visitCallExpr(CallExpr $expr): mixed
+    {
+        $function = $this->evaluate($expr->getCallee());
+
+        $arguments = [];
+        foreach ($expr->getArguments() as $argument) {
+            $arguments[] = $this->evaluate($argument);
+        }
+
+        if (!is_a($function, LoxCallable::class)) {
+            throw new RuntimeError($expr->getParen(), "Can only call functions and classes.");
+        }
+
+        if (count($arguments) !== $function->arity()) {
+            throw new RuntimeError($expr->getParen(), "Expected ".$function->arity()." arguments but got ".count($arguments).".");
+        }
+
+        return $function($this, $arguments);
+    }
+
     private function evaluate(Expr $expr): mixed
     {
         return $expr->accept($this);
@@ -198,10 +231,24 @@ class Interpreter implements ExprVisitor, StmtVisitor
         }
     }
 
+    public function visitFunctionStmt(FunctionStmt $stmt): void
+    {
+        $function = new LoxFunction($stmt, $this->environment);
+        $this->environment->define($stmt->getName()->getLexeme(), $function);
+    }
+
     public function visitPrintStmt(PrintStmt $stmt): void
     {
         $value = $this->evaluate($stmt->getExpression());
         fwrite(STDOUT, $this->stringify($value).PHP_EOL);
+    }
+
+    public function visitReturnStmt(ReturnStmt $stmt): void
+    {
+        $value = null;
+        if (!is_null($stmt->getValue())) $value = $this->evaluate($stmt->getValue());
+
+        throw new ReturnException($value);
     }
 
     public function visitVarStmt(VarStmt $stmt): void

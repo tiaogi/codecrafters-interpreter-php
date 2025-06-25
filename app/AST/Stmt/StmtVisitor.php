@@ -10,4 +10,6 @@ interface StmtVisitor
     public function visitBlockStmt(BlockStmt $stmt): void;
     public function visitIfStmt(IfStmt $stmt): void;
     public function visitWhileStmt(WhileStmt $stmt): void;
+    public function visitFunctionStmt(FunctionStmt $stmt): void;
+    public function visitReturnStmt(ReturnStmt $stmt): void;
 }

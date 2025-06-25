@@ -6,13 +6,14 @@ use App\AST\Expr;
 use App\AST\Expr\UnaryExpr;
 use App\AST\Expr\AssignExpr;
 use App\AST\Expr\BinaryExpr;
+use App\AST\Expr\CallExpr;
 use App\AST\Expr\ExprVisitor;
 use App\AST\Expr\LiteralExpr;
 use App\AST\Expr\VariableExpr;
 use App\AST\Expr\GroupingExpr;
 use App\AST\Expr\LogicalExpr;
 
-class ASTPrinter implements ExprVisitor
+class Printer implements ExprVisitor
 {
     public function print(Expr $expr): string
     {
@@ -52,6 +53,11 @@ class ASTPrinter implements ExprVisitor
     public function visitLogicalExpr(LogicalExpr $expr): string
     {
         return $this->parenthesize($expr->getOperator()->getLexeme(), $expr->getLeft(), $expr->getRight());
+    }
+
+    public function visitCallExpr(CallExpr $expr): string
+    {
+        return $this->parenthesize($expr->getParen()->getLexeme(), $expr->getCallee(), ...$expr->getArguments());
     }
 
     private function parenthesize(string $name, Expr ...$exprs): string

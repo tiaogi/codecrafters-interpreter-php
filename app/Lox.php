@@ -2,7 +2,7 @@
 
 namespace App;
 
-use App\AST\ASTPrinter;
+use App\AST\Printer;
 use App\AST\Expr;
 use App\Parser;
 use App\Exception\RuntimeError;
@@ -40,13 +40,13 @@ class Lox
 
     static function evaluate(): void
     {
-        $interpreter = new Interpreter(new Environment());
+        $interpreter = new Interpreter();
         $interpreter->interpretExpr(self::$expr);
     }
 
     static function run(): void
     {
-        $interpreter = new Interpreter(new Environment());
+        $interpreter = new Interpreter();
         $interpreter->interpret(self::$statements);
     }
 
@@ -74,7 +74,7 @@ class Lox
             return;
         }
 
-        fwrite(STDOUT, (new ASTPrinter())->print(self::$expr).PHP_EOL);
+        fwrite(STDOUT, (new Printer())->print(self::$expr).PHP_EOL);
     }
 
     static function lexerError(int $line, string $message): void
