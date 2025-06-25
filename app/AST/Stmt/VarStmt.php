@@ -10,7 +10,7 @@ class VarStmt implements Stmt
 {
     public function __construct(
         private Token $name,
-        private Expr $initializer
+        private ?Expr $initializer
     ) {}
 
     public function accept(StmtVisitor $visitor): mixed
@@ -23,7 +23,7 @@ class VarStmt implements Stmt
         return $this->name;
     }
 
-    public function getInitializer(): Expr
+    public function getInitializer(): ?Expr
     {
         return $this->initializer;
     }

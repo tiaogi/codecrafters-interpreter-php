@@ -20,7 +20,7 @@ class Environment
 
     public function get(Token $name): mixed
     {
-        if (isset($this->values[$name->getLexeme()])) {
+        if (array_key_exists($name->getLexeme(), $this->values)) {
             return $this->values[$name->getLexeme()];
         }
 
@@ -31,7 +31,7 @@ class Environment
 
     public function assign(Token $name, mixed $value): void
     {
-        if (isset($this->values[$name->getLexeme()])) {
+        if (array_key_exists($name->getLexeme(), $this->values)) {
             $this->values[$name->getLexeme()] = $value;
             return;
         }
